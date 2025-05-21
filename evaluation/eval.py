@@ -61,7 +61,7 @@ def _(eval_dataset, train_dataset):
 def _(InformationRetrievalEvaluator):
     # Given queries, a corpus and a mapping with relevant documents, the InformationRetrievalEvaluator computes different IR metrics.
     def compute_ir(queries, corpus, relevant_docs, model, name="foobar"):
-        ir_evaluator = InformationRetrievalEvaluator(
+        local_ir = InformationRetrievalEvaluator(
             queries=queries,
             corpus=corpus,
             relevant_docs=relevant_docs,
@@ -74,8 +74,8 @@ def _(InformationRetrievalEvaluator):
             map_at_k=[1]
         )
         #run the evaluator
-        value = ir_evaluator(model)
-        return value, ir_evaluator
+        value = local_ir(model)
+        return value, local_ir
     return (compute_ir,)
 
 
@@ -110,17 +110,19 @@ def _(compute_ir, eval_dataset, model, num_iterations, train_dataset):
         print(f"iteration {i}")
 
         qur = {str(i): q for i, q in enumerate(eval_dataset["query"])}
-        crp  = {str(i): a for i, a in enumerate(eval_dataset["answer"])}
-        crp |= {str(i): a for i, a in enumerate(train_dataset["answer"][:num_patch],len(eval_dataset))} # plus 5000 random answers from the training set
+        crp = {str(i): a for i, a in enumerate(eval_dataset["answer"])}
+        crp |= {
+            str(i): a
+            for i, a in enumerate(
+                train_dataset["answer"][:num_patch], len(eval_dataset)
+            )
+        }  # plus n random answers from the training set
 
         rdocs = {qid: {qid} for qid in qur.keys()}
-    
-        res, ir_evaluator = compute_ir(
-            qur, crp, rdocs, model, name="revosax-test-eval"
-        )
+
+        res, _ = compute_ir(qur, crp, rdocs, model, name="revosax-test-eval")
         results.append(res)
         print(res)
-
     return (results,)
 
 
