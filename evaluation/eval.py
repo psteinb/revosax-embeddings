@@ -82,13 +82,16 @@ def _(InformationRetrievalEvaluator):
 @app.cell
 def _(compute_ir, corpus, model, queries, relevant_docs):
     print("run the InformationRetrievalEvaluator")
-    results, ir_evaluator = compute_ir(
-        queries, corpus, relevant_docs, model, name="revosax-test-eval"
-    )
-    print(ir_evaluator.primary_metric)
-    # => "BeIR-touche2020-test_cosine_map@100"
-    print(results[ir_evaluator.primary_metric])
-    # => 0.29335196224364596
+    num_iterations = 5
+    results = []
+    for i in range(num_iterations):
+        print(f"iteration {i}")
+        res, ir_evaluator = compute_ir(
+            queries, corpus, relevant_docs, model, name="revosax-test-eval"
+        )
+        results.append(res)
+        print(res)
+    
     return (results,)
 
 
