@@ -81,17 +81,46 @@ def _(InformationRetrievalEvaluator):
 
 @app.cell
 def _(compute_ir, corpus, model, queries, relevant_docs):
-    print("run the InformationRetrievalEvaluator")
+    print("large validation set reference")
+    res, ir_evaluator = compute_ir(
+            queries, corpus, relevant_docs, model, name="revosax-full-eval"
+        )
+    return
+
+
+@app.cell
+def _(eval_dataset, np):
+    from sklearn.model_selection import KFold
+
     num_iterations = 5
+    kf = KFold(n_splits=num_iterations, random_state=12) #fix seed
+    X = np.arange(eval_dataset.shape[0])
+    sel_indices = []
+    for (train_index, test_index) in kf.split(X):
+        sel_indices.append(test_index)
+
+    return (num_iterations,)
+
+
+@app.cell
+def _(compute_ir, eval_dataset, model, num_iterations, train_dataset):
+    num_patch = 5000 // num_iterations
     results = []
     for i in range(num_iterations):
         print(f"iteration {i}")
+
+        qur = {str(i): q for i, q in enumerate(eval_dataset["query"])}
+        crp  = {str(i): a for i, a in enumerate(eval_dataset["answer"])}
+        crp |= {str(i): a for i, a in enumerate(train_dataset["answer"][:num_patch],len(eval_dataset))} # plus 5000 random answers from the training set
+
+        rdocs = {qid: {qid} for qid in qur.keys()}
+    
         res, ir_evaluator = compute_ir(
-            queries, corpus, relevant_docs, model, name="revosax-test-eval"
+            qur, crp, rdocs, model, name="revosax-test-eval"
         )
         results.append(res)
         print(res)
-    
+
     return (results,)
 
 
