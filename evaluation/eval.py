@@ -52,7 +52,7 @@ def _(eval_dataset, train_dataset):
 app._unparsable_cell(
     r"""
     # Given queries, a corpus and a mapping with relevant documents, the InformationRetrievalEvaluator computes different IR metrics.
-    def compute_ir(queries,corpus,relevant_docs,model,name=\"foobar\")
+    def compute_ir(queries,corpus,relevant_docs,model,name=\"foobar\"):
         ir_evaluator = InformationRetrievalEvaluator(
             queries=queries,
             corpus=corpus,
