@@ -85,7 +85,7 @@ def _(compute_ir, corpus, model, queries, relevant_docs):
     res, ir_evaluator = compute_ir(
             queries, corpus, relevant_docs, model, name="revosax-full-eval"
         )
-    return
+    return (res,)
 
 
 @app.cell
@@ -103,7 +103,7 @@ def _(eval_dataset, np):
 
 
 @app.cell
-def _(compute_ir, eval_dataset, model, num_iterations, train_dataset):
+def _(compute_ir, eval_dataset, model, num_iterations, res, train_dataset):
     num_patch = 5000 // num_iterations
     results = []
     for i in range(num_iterations):
@@ -120,15 +120,15 @@ def _(compute_ir, eval_dataset, model, num_iterations, train_dataset):
 
         rdocs = {qid: {qid} for qid in qur.keys()}
 
-        res, _ = compute_ir(qur, crp, rdocs, model, name="revosax-test-eval")
-        results.append(res)
+        current, _ = compute_ir(qur, crp, rdocs, model, name="revosax-test-eval")
+        results.append(current)
         print(res)
     return (results,)
 
 
 @app.cell
 def _(results):
-    results
+    results #TODO: store all results
     return
 
 
