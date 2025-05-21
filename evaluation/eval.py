@@ -18,7 +18,7 @@ def _():
     #model = SentenceTransformer("../training/models/german-nq-granite-embedding-278m-multilingual/checkpoint-4560")
     model = SentenceTransformer("ibm-granite/granite-embedding-278m-multilingual")
     #model = SentenceTransformer("../training/models/german-nq-paraphrase-multilingual-mpnet-base-v2/checkpoint-4560")
-    return Dataset, load_dataset
+    return Dataset, InformationRetrievalEvaluator, load_dataset, model
 
 
 @app.cell
@@ -46,13 +46,16 @@ def _(eval_dataset, train_dataset):
     corpus |= {str(i): a for i, a in enumerate(train_dataset["answer"][:5000],len(eval_dataset))} # plus 5000 random answers from the training set
 
     relevant_docs = {qid: {qid} for qid in queries.keys()}
-    return
+    print(len(queries)," queries loaded")
+    print(len(corpus)," corpus loaded")
+    print(len(relevant_docs)," relevant docs loaded")
+    return corpus, queries, relevant_docs
 
 
-app._unparsable_cell(
-    r"""
+@app.cell
+def _(InformationRetrievalEvaluator):
     # Given queries, a corpus and a mapping with relevant documents, the InformationRetrievalEvaluator computes different IR metrics.
-    def compute_ir(queries,corpus,relevant_docs,model,name=\"foobar\"):
+    def compute_ir(queries, corpus, relevant_docs, model, name="foobar"):
         ir_evaluator = InformationRetrievalEvaluator(
             queries=queries,
             corpus=corpus,
@@ -61,15 +64,18 @@ app._unparsable_cell(
         )
         value = ir_evaluator(model)
         return value
+    return (compute_ir,)
 
-    results = compute_ir(queries, corpus, relevant_docs, model, name=\"revosax-test-eval\")
+
+@app.cell
+def _(compute_ir, corpus, ir_evaluator, model, queries, relevant_docs):
+    print("run the InformationRetrievalEvaluator")
+    results = compute_ir(queries, corpus, relevant_docs, model, name="revosax-test-eval")
     print(ir_evaluator.primary_metric)
-    # => \"BeIR-touche2020-test_cosine_map@100\"
+    # => "BeIR-touche2020-test_cosine_map@100"
     print(results[ir_evaluator.primary_metric])
     # => 0.29335196224364596
-    """,
-    name="_"
-)
+    return (results,)
 
 
 @app.cell
