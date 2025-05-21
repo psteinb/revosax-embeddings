@@ -62,7 +62,7 @@ app._unparsable_cell(
         value = ir_evaluator(model)
         return value
 
-    results = compute_ir(queries, corpus, relevant_docs, model, name=\"revosax-test-evaluation\")
+    results = compute_ir(queries, corpus, relevant_docs, model, name=\"revosax-test-eval\")
     print(ir_evaluator.primary_metric)
     # => \"BeIR-touche2020-test_cosine_map@100\"
     print(results[ir_evaluator.primary_metric])
