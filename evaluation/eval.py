@@ -7,9 +7,12 @@ app = marimo.App()
 @app.cell
 def _():
     import random
+    import torch
     from sentence_transformers import SentenceTransformer
     from sentence_transformers.evaluation import InformationRetrievalEvaluator
     from datasets import load_dataset, Dataset
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Load a model
     #model = SentenceTransformer('../training/models/german-nq-granite-embedding-107m-multilingual-exclude-pooling-prompts/checkpoint-4560')
@@ -18,6 +21,8 @@ def _():
     #model = SentenceTransformer("../training/models/german-nq-granite-embedding-278m-multilingual/checkpoint-4560")
     model = SentenceTransformer("ibm-granite/granite-embedding-278m-multilingual")
     #model = SentenceTransformer("../training/models/german-nq-paraphrase-multilingual-mpnet-base-v2/checkpoint-4560")
+
+
     return Dataset, InformationRetrievalEvaluator, load_dataset, model
 
 
@@ -61,16 +66,25 @@ def _(InformationRetrievalEvaluator):
             corpus=corpus,
             relevant_docs=relevant_docs,
             name=name,
+            show_progress_bar=True,
+            mrr_at_k= [1],
+            accuracy_at_k= [1,3,5],
+            ndcg_at_k = [1],
+            precision_recall_at_k=[1,3,5],
+            map_at_k=[1]
         )
+        #run the evaluator
         value = ir_evaluator(model)
-        return value
+        return value, ir_evaluator
     return (compute_ir,)
 
 
 @app.cell
-def _(compute_ir, corpus, ir_evaluator, model, queries, relevant_docs):
+def _(compute_ir, corpus, model, queries, relevant_docs):
     print("run the InformationRetrievalEvaluator")
-    results = compute_ir(queries, corpus, relevant_docs, model, name="revosax-test-eval")
+    results, ir_evaluator = compute_ir(
+        queries, corpus, relevant_docs, model, name="revosax-test-eval"
+    )
     print(ir_evaluator.primary_metric)
     # => "BeIR-touche2020-test_cosine_map@100"
     print(results[ir_evaluator.primary_metric])
@@ -84,7 +98,7 @@ def _(results):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
@@ -150,7 +164,7 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(r""" """)
     return
