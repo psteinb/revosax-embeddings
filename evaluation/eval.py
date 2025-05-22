@@ -91,9 +91,10 @@ def _(compute_ir, corpus, model, queries, relevant_docs):
 @app.cell
 def _(eval_dataset, np):
     from sklearn.model_selection import KFold
-
+    import numpy as np
+    
     num_iterations = 5
-    kf = KFold(n_splits=num_iterations, random_state=12) #fix seed
+    kf = KFold(n_splits=num_iterations, shuffle=True, random_state=12) #fix seed
     X = np.arange(eval_dataset.shape[0])
     sel_indices = []
     for (train_index, test_index) in kf.split(X):
@@ -122,7 +123,7 @@ def _(compute_ir, eval_dataset, model, num_iterations, res, train_dataset):
 
         current, _ = compute_ir(qur, crp, rdocs, model, name="revosax-test-eval")
         results.append(current)
-        print(res)
+        print(current)
     return (results,)
 
 
