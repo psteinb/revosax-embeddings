@@ -11,6 +11,7 @@ def _():
     from sentence_transformers import SentenceTransformer
     from sentence_transformers.evaluation import InformationRetrievalEvaluator
     from datasets import load_dataset, Dataset
+    import pandas as pd
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -23,7 +24,7 @@ def _():
     #model = SentenceTransformer("../training/models/german-nq-paraphrase-multilingual-mpnet-base-v2/checkpoint-4560")
 
 
-    return Dataset, InformationRetrievalEvaluator, load_dataset, model
+    return Dataset, InformationRetrievalEvaluator, load_dataset, model, pd
 
 
 @app.cell
@@ -80,20 +81,23 @@ def _(InformationRetrievalEvaluator):
 
 
 @app.cell
-def _(compute_ir, corpus, model, queries, relevant_docs):
+def _(compute_ir, corpus, model, pd, queries, relevant_docs):
     print("large validation set reference")
     res, ir_evaluator = compute_ir(
             queries, corpus, relevant_docs, model, name="revosax-full-eval"
         )
-    return (res,)
+
+    tdf = pd.DataFrame.from_dict(res)
+    tdf.to_csv("revosax-eval-totals.csv")
+    return
 
 
 @app.cell
-def _(eval_dataset, np):
+def _(eval_dataset):
     from sklearn.model_selection import KFold
     import numpy as np
-    
-    num_iterations = 5
+
+    num_iterations = 10
     kf = KFold(n_splits=num_iterations, shuffle=True, random_state=12) #fix seed
     X = np.arange(eval_dataset.shape[0])
     sel_indices = []
@@ -104,7 +108,7 @@ def _(eval_dataset, np):
 
 
 @app.cell
-def _(compute_ir, eval_dataset, model, num_iterations, res, train_dataset):
+def _(compute_ir, eval_dataset, model, num_iterations, train_dataset):
     num_patch = 5000 // num_iterations
     results = []
     for i in range(num_iterations):
@@ -125,6 +129,18 @@ def _(compute_ir, eval_dataset, model, num_iterations, res, train_dataset):
         results.append(current)
         print(current)
     return (results,)
+
+
+@app.cell
+def _(pd, results):
+    def l2d(ld):
+        """ convert list of dictionaries to dictionary where all values yield lists """
+        return {k: [dic[k] for dic in ld] for k in ld[0]}
+
+    resdict = l2d(results)
+    rdf = pd.DataFrame.from_dict(resdict)
+    rdf.to_csv("revosax-eval-ensemble.csv")
+    return
 
 
 @app.cell
