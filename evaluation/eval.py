@@ -80,6 +80,12 @@ def _(InformationRetrievalEvaluator):
     return (compute_ir,)
 
 
+@app.function
+def l2d(ld):
+    """ convert list of dictionaries to dictionary where all values yield lists """
+    return {k: [dic[k] for dic in ld] for k in ld[0]}
+
+
 @app.cell
 def _(compute_ir, corpus, model, pd, queries, relevant_docs):
     print("large validation set reference")
@@ -87,7 +93,8 @@ def _(compute_ir, corpus, model, pd, queries, relevant_docs):
             queries, corpus, relevant_docs, model, name="revosax-full-eval"
         )
 
-    tdf = pd.DataFrame.from_dict(res)
+    res_ = l2d([res])
+    tdf = pd.DataFrame.from_dict(res_)
     tdf.to_csv("revosax-eval-totals.csv")
     return
 
@@ -133,9 +140,7 @@ def _(compute_ir, eval_dataset, model, num_iterations, train_dataset):
 
 @app.cell
 def _(pd, results):
-    def l2d(ld):
-        """ convert list of dictionaries to dictionary where all values yield lists """
-        return {k: [dic[k] for dic in ld] for k in ld[0]}
+
 
     resdict = l2d(results)
     rdf = pd.DataFrame.from_dict(resdict)
